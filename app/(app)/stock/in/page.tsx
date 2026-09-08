@@ -13,12 +13,7 @@ export default async function StockInPage() {
     <div className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-4">
         <div>
-          <h1
-            className="text-3xl font-semibold text-teal-900"
-            style={{ fontFamily: "var(--font-display), serif" }}
-          >
-            Stock In
-          </h1>
+          <h1 className="text-3xl font-semibold text-teal-900">Stock In</h1>
           <p className="mt-1 text-teal-800/70">
             Record purchases by batch / lot from supplier or restock reports.
           </p>

@@ -54,7 +54,7 @@ export function AppNav({
           </button>
           <Link
             href="/dashboard"
-            className="font-serif text-2xl font-semibold tracking-tight text-teal-800"
+            className="text-2xl font-semibold tracking-tight text-teal-800"
           >
             StockRx
           </Link>

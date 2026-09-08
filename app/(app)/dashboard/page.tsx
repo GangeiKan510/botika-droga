@@ -58,12 +58,7 @@ export default async function DashboardPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1
-          className="text-3xl font-semibold text-teal-900"
-          style={{ fontFamily: "var(--font-display), serif" }}
-        >
-          Dashboard
-        </h1>
+        <h1 className="text-3xl font-semibold text-teal-900">Dashboard</h1>
         <p className="mt-2 text-teal-800/70">
           Enter cashier reports as stock in/out; sales and alerts update
           automatically.

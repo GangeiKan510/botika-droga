@@ -21,12 +21,7 @@ export default async function StockOutPage() {
     <div className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-4">
         <div>
-          <h1
-            className="text-3xl font-semibold text-teal-900"
-            style={{ fontFamily: "var(--font-display), serif" }}
-          >
-            Stock Out
-          </h1>
+          <h1 className="text-3xl font-semibold text-teal-900">Stock Out</h1>
           <p className="mt-1 text-teal-800/70">
             Enter outs from cashier reports. Sales totals are derived from
             quantity × selling price. FEFO picks the earliest-expiring batch.

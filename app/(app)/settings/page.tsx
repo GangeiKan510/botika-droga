@@ -22,12 +22,7 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1
-          className="text-3xl font-semibold text-teal-900"
-          style={{ fontFamily: "var(--font-display), serif" }}
-        >
-          Settings
-        </h1>
+        <h1 className="text-3xl font-semibold text-teal-900">Settings</h1>
         <p className="mt-1 text-teal-800/70">
           Adjust when StockRx should flag low stock and near-expiry lots.
         </p>

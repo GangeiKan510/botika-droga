@@ -9,10 +9,7 @@ export default function NewMedicationPage() {
         <Link href="/medications" className="link link-primary text-sm">
           ← Medications
         </Link>
-        <h1
-          className="mt-2 text-3xl font-semibold text-teal-900"
-          style={{ fontFamily: "var(--font-display), serif" }}
-        >
+        <h1 className="mt-2 text-3xl font-semibold text-teal-900">
           Add medication
         </h1>
       </div>
