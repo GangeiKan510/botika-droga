@@ -59,7 +59,7 @@ export async function updateAlertSettings(
     return { error: "Could not save settings." };
   }
 
-  revalidatePath("/settings");
+  revalidatePath("/account/settings");
   revalidatePath("/alerts");
   revalidatePath("/inventory");
   revalidatePath("/dashboard");

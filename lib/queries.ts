@@ -348,3 +348,53 @@ export async function getRecentTransactions(limit = 20) {
   if (error) throw new Error("Failed to load transactions");
   return data ?? [];
 }
+
+export async function getAccountUsageSummary() {
+  const supabase = await createClient();
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0,
+    23,
+    59,
+    59,
+    999,
+  );
+  const periodLabel = start.toLocaleDateString("en-PH", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const [meds, txns] = await Promise.all([
+    supabase
+      .from("medications")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true),
+    supabase
+      .from("inventory_transactions")
+      .select("type, line_total")
+      .gte("created_at", start.toISOString())
+      .lte("created_at", end.toISOString()),
+  ]);
+
+  if (meds.error) throw new Error("Failed to load usage medications");
+  if (txns.error) throw new Error("Failed to load usage transactions");
+
+  const rows = txns.data ?? [];
+  const stockInCount = rows.filter((r) => r.type === "RECEIVED").length;
+  const stockOutCount = rows.filter((r) => r.type === "DISPENSED").length;
+  const salesTotal = rows
+    .filter((r) => r.type === "DISPENSED")
+    .reduce((sum, r) => sum + Number(r.line_total ?? 0), 0);
+
+  return {
+    periodLabel,
+    medicationCount: meds.count ?? 0,
+    stockInCount,
+    stockOutCount,
+    salesTotal,
+    smsSent: 0,
+  };
+}

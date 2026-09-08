@@ -29,7 +29,7 @@ export default async function AlertsPage() {
             and near expiry (≤ {settings.near_expiry_days} days).
           </p>
         </div>
-        <Link href="/settings" className="btn btn-outline btn-sm">
+        <Link href="/account/settings" className="btn btn-outline btn-sm">
           Edit thresholds
         </Link>
       </div>

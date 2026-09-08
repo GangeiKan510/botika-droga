@@ -14,7 +14,7 @@ const nav = [
   { href: "/inventory", label: "Inventory" },
   { href: "/alerts", label: "Alerts", badgeKey: "alerts" as const },
   { href: "/sales", label: "Sales" },
-  { href: "/settings", label: "Settings" },
+  { href: "/account", label: "Account" },
 ];
 
 export function AppNav({

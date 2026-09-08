@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function LegacySettingsRedirect() {
+export default function AccountIndexPage() {
   redirect("/account/settings");
 }

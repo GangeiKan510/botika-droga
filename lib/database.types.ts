@@ -216,6 +216,84 @@ export type Database = {
           },
         ];
       };
+      subscriptions: {
+        Row: {
+          owner_id: string;
+          status: string;
+          plan_code: string;
+          amount_centavos: number;
+          currency: string;
+          current_period_start: string | null;
+          current_period_end: string | null;
+          paymongo_checkout_session_id: string | null;
+          updated_at: string;
+          created_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          status?: string;
+          plan_code?: string;
+          amount_centavos?: number;
+          currency?: string;
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          paymongo_checkout_session_id?: string | null;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          owner_id?: string;
+          status?: string;
+          plan_code?: string;
+          amount_centavos?: number;
+          currency?: string;
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          paymongo_checkout_session_id?: string | null;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      subscription_payments: {
+        Row: {
+          id: string;
+          owner_id: string;
+          checkout_session_id: string;
+          reference_number: string | null;
+          amount_centavos: number;
+          currency: string;
+          status: string;
+          paymongo_event_id: string | null;
+          paid_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          checkout_session_id: string;
+          reference_number?: string | null;
+          amount_centavos: number;
+          currency?: string;
+          status?: string;
+          paymongo_event_id?: string | null;
+          paid_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          checkout_session_id?: string;
+          reference_number?: string | null;
+          amount_centavos?: number;
+          currency?: string;
+          status?: string;
+          paymongo_event_id?: string | null;
+          paid_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
