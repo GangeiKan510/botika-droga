@@ -1,26 +1,17 @@
 @import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --stockrx-teal: #0d9488;
+  --stockrx-teal-dark: #0f766e;
+  --stockrx-cream: #f0fdfa;
+  --stockrx-ink: #134e4a;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(165deg, #f0fdfa 0%, #ecfeff 45%, #f8fafc 100%);
+  min-height: 100vh;
+  color: var(--stockrx-ink);
 }

@@ -1,26 +1,41 @@
 {
-  "name": "pharmally",
+  "name": "stockrx",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest",
+    "type-check": "tsc --noEmit",
+    "format:check": "prettier --check .",
+    "prettier:fix": "prettier --write ."
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.6",
+    "@supabase/supabase-js": "^2.116.0",
+    "daisyui": "^5.7.28",
+    "date-fns": "^4.4.0",
     "next": "16.3.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "jest": "^30.5.1",
+    "jest-environment-node": "^30.5.1",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.12",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
