@@ -264,6 +264,7 @@ export type Database = {
           amount_centavos: number;
           currency: string;
           status: string;
+          product_code: string;
           paymongo_event_id: string | null;
           paid_at: string;
           created_at: string;
@@ -276,6 +277,7 @@ export type Database = {
           amount_centavos: number;
           currency?: string;
           status?: string;
+          product_code?: string;
           paymongo_event_id?: string | null;
           paid_at?: string;
           created_at?: string;
@@ -288,8 +290,51 @@ export type Database = {
           amount_centavos?: number;
           currency?: string;
           status?: string;
+          product_code?: string;
           paymongo_event_id?: string | null;
           paid_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      sms_addons: {
+        Row: {
+          owner_id: string;
+          status: string;
+          messages_included: number;
+          messages_used: number;
+          amount_centavos: number;
+          currency: string;
+          current_period_start: string | null;
+          current_period_end: string | null;
+          paymongo_checkout_session_id: string | null;
+          updated_at: string;
+          created_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          status?: string;
+          messages_included?: number;
+          messages_used?: number;
+          amount_centavos?: number;
+          currency?: string;
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          paymongo_checkout_session_id?: string | null;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          owner_id?: string;
+          status?: string;
+          messages_included?: number;
+          messages_used?: number;
+          amount_centavos?: number;
+          currency?: string;
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          paymongo_checkout_session_id?: string | null;
+          updated_at?: string;
           created_at?: string;
         };
         Relationships: [];

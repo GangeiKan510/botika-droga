@@ -1,6 +1,10 @@
 import { createHmac } from "node:crypto";
 
-import { addBillingPeriod, isSubscriptionActive } from "@/lib/billing";
+import {
+  addBillingPeriod,
+  isSmsAddonActive,
+  isSubscriptionActive,
+} from "@/lib/billing";
 import { verifyPaymongoSignature } from "@/lib/paymongo";
 
 describe("billing helpers", () => {
@@ -20,6 +24,15 @@ describe("billing helpers", () => {
         current_period_end: new Date(Date.now() - 86_400_000).toISOString(),
       }),
     ).toBe(false);
+  });
+
+  it("treats SMS addon period independently", () => {
+    expect(
+      isSmsAddonActive({
+        status: "active",
+        current_period_end: new Date(Date.now() + 86_400_000).toISOString(),
+      }),
+    ).toBe(true);
   });
 
   it("extends billing period by 30 days", () => {

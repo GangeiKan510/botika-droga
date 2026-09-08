@@ -3,10 +3,25 @@ export const PLAN_CODE = "standard";
 export const PLAN_NAME = "StockRx Standard";
 export const PLAN_INTERVAL_DAYS = 30;
 
+export const SMS_ADDON_CODE = "sms_addon";
+export const SMS_ADDON_NAME = "SMS Alerts";
+export const SMS_ADDON_MESSAGES = 100;
+export const SMS_ADDON_AMOUNT_CENTAVOS = 9_900; // ₱99
+
+export type CheckoutProduct = typeof PLAN_CODE | typeof SMS_ADDON_CODE;
+
 export function getPlanAmountCentavos(): number {
   const raw = process.env.SUBSCRIPTION_PRICE_CENTAVOS;
   const parsed = raw ? Number.parseInt(raw, 10) : 120_000;
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
+}
+
+export function getSmsAddonAmountCentavos(): number {
+  const raw = process.env.SMS_ADDON_PRICE_CENTAVOS;
+  const parsed = raw ? Number.parseInt(raw, 10) : SMS_ADDON_AMOUNT_CENTAVOS;
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : SMS_ADDON_AMOUNT_CENTAVOS;
 }
 
 export function formatPlanPrice(centavos = getPlanAmountCentavos()): string {
@@ -36,6 +51,15 @@ export function getPaymentMethodTypes(): string[] {
 }
 
 export function isSubscriptionActive(input: {
+  status: string | null | undefined;
+  current_period_end: string | null | undefined;
+}): boolean {
+  if (input.status !== "active") return false;
+  if (!input.current_period_end) return false;
+  return new Date(input.current_period_end).getTime() > Date.now();
+}
+
+export function isSmsAddonActive(input: {
   status: string | null | undefined;
   current_period_end: string | null | undefined;
 }): boolean {

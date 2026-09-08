@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 
-import { getPlanAmountCentavos } from "@/lib/billing";
+import {
+  getPlanAmountCentavos,
+  getSmsAddonAmountCentavos,
+  SMS_ADDON_CODE,
+} from "@/lib/billing";
 import { parsePaymongoEvent, verifyPaymongoSignature } from "@/lib/paymongo";
-import { fulfillPaidCheckout } from "@/lib/subscription-fulfillment";
+import {
+  fulfillPaidCheckout,
+  fulfillSmsAddonCheckout,
+} from "@/lib/subscription-fulfillment";
 
 export const runtime = "nodejs";
 
@@ -35,13 +42,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  const result = await fulfillPaidCheckout({
-    ownerId: parsed.ownerId,
-    checkoutSessionId: parsed.sessionId,
-    referenceNumber: parsed.referenceNumber,
-    amountCentavos: parsed.amountCentavos ?? getPlanAmountCentavos(),
-    eventId: parsed.eventId,
-  });
+  const isSms = parsed.planCode === SMS_ADDON_CODE;
+  const result = isSms
+    ? await fulfillSmsAddonCheckout({
+        ownerId: parsed.ownerId,
+        checkoutSessionId: parsed.sessionId,
+        referenceNumber: parsed.referenceNumber,
+        amountCentavos: parsed.amountCentavos ?? getSmsAddonAmountCentavos(),
+        eventId: parsed.eventId,
+      })
+    : await fulfillPaidCheckout({
+        ownerId: parsed.ownerId,
+        checkoutSessionId: parsed.sessionId,
+        referenceNumber: parsed.referenceNumber,
+        amountCentavos: parsed.amountCentavos ?? getPlanAmountCentavos(),
+        eventId: parsed.eventId,
+      });
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 500 });

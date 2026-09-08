@@ -4,7 +4,13 @@ import {
   getAppUrl,
   getPaymentMethodTypes,
   getPlanAmountCentavos,
+  getSmsAddonAmountCentavos,
+  PLAN_CODE,
   PLAN_NAME,
+  SMS_ADDON_CODE,
+  SMS_ADDON_MESSAGES,
+  SMS_ADDON_NAME,
+  type CheckoutProduct,
 } from "@/lib/billing";
 
 type PaymongoErrorBody = {
@@ -32,9 +38,22 @@ export async function createCheckoutSession(input: {
   ownerId: string;
   email?: string | null;
   referenceNumber: string;
+  product?: CheckoutProduct;
 }): Promise<CheckoutSessionResult> {
-  const amount = getPlanAmountCentavos();
+  const product = input.product ?? PLAN_CODE;
+  const isSms = product === SMS_ADDON_CODE;
+  const amount = isSms ? getSmsAddonAmountCentavos() : getPlanAmountCentavos();
   const appUrl = getAppUrl();
+  const name = isSms ? SMS_ADDON_NAME : PLAN_NAME;
+  const description = isSms
+    ? `${SMS_ADDON_MESSAGES} SMS · 30 days from purchase`
+    : "1 store · 30 days access";
+  const successPath = isSms
+    ? "/account/usage?sms_paid=1"
+    : "/account/subscription?paid=1";
+  const cancelPath = isSms
+    ? "/account/usage?sms_canceled=1"
+    : "/account/subscription?canceled=1";
 
   const response = await fetch(
     "https://api.paymongo.com/v2/checkout_sessions",
@@ -51,23 +70,25 @@ export async function createCheckoutSession(input: {
             send_email_receipt: true,
             show_description: true,
             show_line_items: true,
-            description: `${PLAN_NAME} — monthly subscription`,
+            description: isSms
+              ? `${SMS_ADDON_NAME} — monthly SMS pack`
+              : `${PLAN_NAME} — monthly subscription`,
             line_items: [
               {
-                name: PLAN_NAME,
-                description: "1 store · 30 days access",
+                name,
+                description,
                 amount,
                 currency: "PHP",
                 quantity: 1,
               },
             ],
             payment_method_types: getPaymentMethodTypes(),
-            success_url: `${appUrl}/account/subscription?paid=1`,
-            cancel_url: `${appUrl}/account/subscription?canceled=1`,
+            success_url: `${appUrl}${successPath}`,
+            cancel_url: `${appUrl}${cancelPath}`,
             reference_number: input.referenceNumber,
             metadata: {
               owner_id: input.ownerId,
-              plan_code: "standard",
+              plan_code: product,
             },
             ...(input.email
               ? {
@@ -100,6 +121,7 @@ export type RetrievedCheckoutSession = {
   id: string;
   paid: boolean;
   ownerId: string | null;
+  planCode: string | null;
   referenceNumber: string | null;
   amountCentavos: number | null;
 };
@@ -178,6 +200,7 @@ export async function retrieveCheckoutSession(
     id: data.id,
     paid,
     ownerId: attrs.metadata?.owner_id ?? null,
+    planCode: attrs.metadata?.plan_code ?? null,
     referenceNumber: attrs.reference_number ?? null,
     amountCentavos,
   };
@@ -257,6 +280,7 @@ export function parsePaymongoEvent(body: unknown): {
   eventType: string | null;
   sessionId: string | null;
   ownerId: string | null;
+  planCode: string | null;
   referenceNumber: string | null;
   amountCentavos: number | null;
 } {
@@ -274,6 +298,7 @@ export function parsePaymongoEvent(body: unknown): {
     eventType,
     sessionId: session?.id ?? null,
     ownerId: metadata.owner_id ?? null,
+    planCode: metadata.plan_code ?? null,
     referenceNumber: attrs?.reference_number ?? null,
     amountCentavos: paymentAmount ?? lineAmount ?? null,
   };
