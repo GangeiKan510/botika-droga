@@ -2,7 +2,17 @@
 
 import { useRouter } from "next/navigation";
 
-export function YearSelect({ year, years }: { year: number; years: number[] }) {
+import type { SalesPeriod } from "@/lib/inventory";
+
+export function YearSelect({
+  year,
+  years,
+  period,
+}: {
+  year: number;
+  years: number[];
+  period: SalesPeriod;
+}) {
   const router = useRouter();
 
   return (
@@ -13,7 +23,7 @@ export function YearSelect({ year, years }: { year: number; years: number[] }) {
         value={String(year)}
         onChange={(e) => {
           const next = e.target.value;
-          router.push(`/dashboard?year=${next}`);
+          router.push(`/dashboard?year=${next}&period=${period}`);
         }}
         aria-label="Select analytics year"
       >

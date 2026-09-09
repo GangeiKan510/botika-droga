@@ -1,6 +1,17 @@
-import { formatCompactMoney, type MonthlySalesPoint } from "@/lib/inventory";
+import {
+  formatCompactMoney,
+  salesChartLabelIndexes,
+  type SalesChartPoint,
+  type SalesPeriod,
+} from "@/lib/inventory";
 
-export function SalesAreaChart({ series }: { series: MonthlySalesPoint[] }) {
+export function SalesAreaChart({
+  series,
+  period,
+}: {
+  series: SalesChartPoint[];
+  period: SalesPeriod;
+}) {
   const width = 640;
   const height = 260;
   const pad = { top: 16, right: 12, bottom: 36, left: 48 };
@@ -10,6 +21,7 @@ export function SalesAreaChart({ series }: { series: MonthlySalesPoint[] }) {
   const max = Math.max(...series.map((p) => p.total), 0);
   const chartMax = niceCeiling(max);
   const ticks = buildTicks(chartMax);
+  const showPoints = series.length <= 60;
 
   const points = series.map((point, i) => {
     const x =
@@ -36,9 +48,7 @@ export function SalesAreaChart({ series }: { series: MonthlySalesPoint[] }) {
           "Z",
         ].join(" ");
 
-  const labelIndexes = new Set(
-    [0, 2, 4, 5, 6, 7, 8, 11].filter((i) => i < series.length),
-  );
+  const labelIndexes = salesChartLabelIndexes(series, period);
 
   return (
     <div className="w-full">
@@ -46,7 +56,7 @@ export function SalesAreaChart({ series }: { series: MonthlySalesPoint[] }) {
         viewBox={`0 0 ${width} ${height}`}
         className="h-auto w-full"
         role="img"
-        aria-label="Monthly sales area chart"
+        aria-label={`${period} sales area chart`}
       >
         <defs>
           <linearGradient id="salesAreaFill" x1="0" y1="0" x2="0" y2="1">
@@ -92,26 +102,26 @@ export function SalesAreaChart({ series }: { series: MonthlySalesPoint[] }) {
           />
         ) : null}
 
-        {points.map((p) => (
-          <circle
-            key={p.month}
-            cx={p.x}
-            cy={p.y}
-            r="3.5"
-            fill="#fff"
-            stroke="#0f766e"
-            strokeWidth="2"
-          >
-            <title>
-              {p.label}: {formatCompactMoney(p.total)}
-            </title>
-          </circle>
-        ))}
+        {showPoints
+          ? points.map((p) => (
+              <circle
+                key={p.key}
+                cx={p.x}
+                cy={p.y}
+                r="3.5"
+                fill="#fff"
+                stroke="#0f766e"
+                strokeWidth="2"
+              >
+                <title>{`${p.label}: ${formatCompactMoney(p.total)}`}</title>
+              </circle>
+            ))
+          : null}
 
         {points.map((p, i) =>
           labelIndexes.has(i) ? (
             <text
-              key={`label-${p.month}`}
+              key={`label-${p.key}`}
               x={p.x}
               y={height - 12}
               textAnchor="middle"

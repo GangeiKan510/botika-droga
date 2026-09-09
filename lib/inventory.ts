@@ -359,11 +359,40 @@ export type DailySalesPoint = {
   total: number;
 };
 
-export type MonthlySalesPoint = {
-  month: string; // yyyy-mm
+export type SalesChartPoint = {
+  key: string;
   label: string;
   total: number;
 };
+
+export type MonthlySalesPoint = SalesChartPoint;
+
+export const SALES_PERIODS = ["daily", "weekly", "monthly"] as const;
+export type SalesPeriod = (typeof SALES_PERIODS)[number];
+
+export function parseSalesPeriod(
+  value: string | undefined | null,
+): SalesPeriod {
+  if (value === "daily" || value === "weekly" || value === "monthly") {
+    return value;
+  }
+  return "monthly";
+}
+
+export function salesPeriodSubtitle(period: SalesPeriod): string {
+  if (period === "daily") return "Revenue (₱) by day";
+  if (period === "weekly") return "Revenue (₱) by week";
+  return "Revenue (₱) by month";
+}
+
+function addLineTotal(
+  totals: Map<string, number>,
+  key: string,
+  lineTotal: number | string,
+) {
+  const n = typeof lineTotal === "string" ? Number(lineTotal) : lineTotal;
+  totals.set(key, (totals.get(key) ?? 0) + (Number.isFinite(n) ? n : 0));
+}
 
 export type BestSeller = {
   medication_id: string;
@@ -386,13 +415,11 @@ export function buildDailySalesSeries(
 
   const totals = new Map<string, number>();
   for (const row of rows) {
-    const d = new Date(row.created_at);
-    const key = toDateInputValue(d);
-    const n =
-      typeof row.line_total === "string"
-        ? Number(row.line_total)
-        : row.line_total;
-    totals.set(key, (totals.get(key) ?? 0) + (Number.isFinite(n) ? n : 0));
+    addLineTotal(
+      totals,
+      toDateInputValue(new Date(row.created_at)),
+      row.line_total,
+    );
   }
 
   const series: DailySalesPoint[] = [];
@@ -409,6 +436,67 @@ export function buildDailySalesSeries(
   return series;
 }
 
+/** Every local calendar day in `year`, summing DISPENSED line totals (zeros filled). */
+export function buildYearDailySalesSeries(
+  rows: { created_at: string; line_total: number | string }[],
+  year: number,
+): SalesChartPoint[] {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    const d = new Date(row.created_at);
+    if (d.getFullYear() !== year) continue;
+    addLineTotal(totals, toDateInputValue(d), row.line_total);
+  }
+
+  const series: SalesChartPoint[] = [];
+  const cursor = new Date(year, 0, 1);
+  const end = new Date(year, 11, 31);
+  while (cursor.getTime() <= end.getTime()) {
+    const key = toDateInputValue(cursor);
+    series.push({
+      key,
+      label: cursor.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      total: totals.get(key) ?? 0,
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return series;
+}
+
+/** Monday–Sunday weeks overlapping `year`, summing that year's DISPENSED totals. */
+export function buildYearWeeklySalesSeries(
+  rows: { created_at: string; line_total: number | string }[],
+  year: number,
+): SalesChartPoint[] {
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    const d = new Date(row.created_at);
+    if (d.getFullYear() !== year) continue;
+    const { start } = getCalendarWeekRange(d);
+    addLineTotal(totals, toDateInputValue(start), row.line_total);
+  }
+
+  const series: SalesChartPoint[] = [];
+  const cursor = getCalendarWeekRange(new Date(year, 0, 1)).start;
+  const lastMonday = getCalendarWeekRange(new Date(year, 11, 31)).start;
+  while (cursor.getTime() <= lastMonday.getTime()) {
+    const key = toDateInputValue(cursor);
+    series.push({
+      key,
+      label: cursor.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      total: totals.get(key) ?? 0,
+    });
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  return series;
+}
+
 /** Jan–Dec for `year`, summing DISPENSED line totals by month (zeros filled). */
 export function buildMonthlySalesSeries(
   rows: { created_at: string; line_total: number | string }[],
@@ -419,11 +507,7 @@ export function buildMonthlySalesSeries(
     const d = new Date(row.created_at);
     if (d.getFullYear() !== year) continue;
     const key = `${year}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const n =
-      typeof row.line_total === "string"
-        ? Number(row.line_total)
-        : row.line_total;
-    totals.set(key, (totals.get(key) ?? 0) + (Number.isFinite(n) ? n : 0));
+    addLineTotal(totals, key, row.line_total);
   }
 
   const series: MonthlySalesPoint[] = [];
@@ -431,7 +515,7 @@ export function buildMonthlySalesSeries(
     const key = `${year}-${String(month).padStart(2, "0")}`;
     const labelDate = new Date(year, month - 1, 1);
     series.push({
-      month: key,
+      key,
       label: labelDate.toLocaleDateString("en-US", {
         month: "short",
         year: "2-digit",
@@ -440,6 +524,44 @@ export function buildMonthlySalesSeries(
     });
   }
   return series;
+}
+
+export function buildSalesChartSeries(
+  rows: { created_at: string; line_total: number | string }[],
+  year: number,
+  period: SalesPeriod,
+): SalesChartPoint[] {
+  if (period === "daily") return buildYearDailySalesSeries(rows, year);
+  if (period === "weekly") return buildYearWeeklySalesSeries(rows, year);
+  return buildMonthlySalesSeries(rows, year);
+}
+
+export function salesChartLabelIndexes(
+  series: { key: string }[],
+  period: SalesPeriod,
+): Set<number> {
+  if (period === "daily") {
+    return new Set(
+      series.flatMap((point, i) => (point.key.endsWith("-01") ? [i] : [])),
+    );
+  }
+  if (period === "weekly") {
+    const indexes = new Set<number>();
+    const seenMonths = new Set<string>();
+    series.forEach((point, i) => {
+      const monthKey = point.key.slice(0, 7);
+      if (!seenMonths.has(monthKey)) {
+        seenMonths.add(monthKey);
+        indexes.add(i);
+      }
+    });
+    if (series.length > 0) {
+      indexes.add(0);
+      indexes.add(series.length - 1);
+    }
+    return indexes;
+  }
+  return new Set([0, 2, 4, 5, 6, 7, 8, 11].filter((i) => i < series.length));
 }
 
 export function rankBestSellers(

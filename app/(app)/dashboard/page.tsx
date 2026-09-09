@@ -6,17 +6,21 @@ import {
   getAlerts,
   getBestSellingMedications,
   getInventoryRows,
-  getMonthlySalesForYear,
   getRecentTransactions,
+  getSalesAnalyticsForYear,
   getSalesForDay,
   getSalesForWeek,
 } from "@/lib/queries";
-import { formatMoney, medicationDisplayName } from "@/lib/inventory";
+import {
+  formatMoney,
+  medicationDisplayName,
+  parseSalesPeriod,
+} from "@/lib/inventory";
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string }>;
+  searchParams: Promise<{ year?: string; period?: string }>;
 }) {
   const today = new Date();
   const params = await searchParams;
@@ -28,6 +32,7 @@ export default async function DashboardPage({
     requestedYear <= currentYear + 1
       ? requestedYear
       : currentYear;
+  const period = parseSalesPeriod(params.period);
   const years = Array.from({ length: 4 }, (_, i) => currentYear - i);
 
   const [
@@ -36,7 +41,7 @@ export default async function DashboardPage({
     alertsResult,
     inventory,
     recent,
-    monthlySales,
+    analytics,
     bestSellers,
   ] = await Promise.all([
     getSalesForDay(today),
@@ -44,7 +49,7 @@ export default async function DashboardPage({
     getAlerts(),
     getInventoryRows(),
     getRecentTransactions(8),
-    getMonthlySalesForYear(year),
+    getSalesAnalyticsForYear(year, period),
     getBestSellingMedications(year, 5),
   ]);
 
@@ -88,8 +93,9 @@ export default async function DashboardPage({
         <SalesAnalyticsCard
           year={year}
           years={years}
-          series={monthlySales.series}
-          totalFormatted={monthlySales.formatted}
+          period={period}
+          series={analytics.series}
+          totalFormatted={analytics.formatted}
         />
         <BestSellingProducts items={bestSellers} year={year} />
       </div>

@@ -5,7 +5,12 @@ import {
   filterInventoryRows,
   buildDailySalesSeries,
   buildMonthlySalesSeries,
+  buildYearDailySalesSeries,
+  buildYearWeeklySalesSeries,
+  parseSalesPeriod,
   rankBestSellers,
+  salesChartLabelIndexes,
+  salesPeriodSubtitle,
   getCalendarWeekRange,
   matchesMedicationSearch,
   medicationDisplayName,
@@ -318,6 +323,124 @@ describe("buildDailySalesSeries", () => {
       "2026-03-11",
     ]);
     expect(series.map((p) => p.total)).toEqual([50, 0, 138]);
+  });
+});
+
+describe("parseSalesPeriod and salesPeriodSubtitle", () => {
+  it("defaults invalid or missing values to monthly", () => {
+    expect(parseSalesPeriod(undefined)).toBe("monthly");
+    expect(parseSalesPeriod("")).toBe("monthly");
+    expect(parseSalesPeriod("year")).toBe("monthly");
+  });
+
+  it("accepts daily, weekly, and monthly", () => {
+    expect(parseSalesPeriod("daily")).toBe("daily");
+    expect(parseSalesPeriod("weekly")).toBe("weekly");
+    expect(parseSalesPeriod("monthly")).toBe("monthly");
+  });
+
+  it("assembles the analytics subtitle from the period noun", () => {
+    expect(salesPeriodSubtitle("daily")).toBe("Revenue (₱) by day");
+    expect(salesPeriodSubtitle("weekly")).toBe("Revenue (₱) by week");
+    expect(salesPeriodSubtitle("monthly")).toBe("Revenue (₱) by month");
+  });
+});
+
+describe("buildYearDailySalesSeries", () => {
+  it("fills every local day in a non-leap year and ignores other years", () => {
+    const series = buildYearDailySalesSeries(
+      [
+        {
+          created_at: new Date(2026, 8, 8, 9, 0, 0).toISOString(),
+          line_total: 400,
+        },
+        {
+          created_at: new Date(2026, 8, 8, 16, 0, 0).toISOString(),
+          line_total: "380",
+        },
+        {
+          created_at: new Date(2025, 8, 8).toISOString(),
+          line_total: 999,
+        },
+      ],
+      2026,
+    );
+    expect(series).toHaveLength(365);
+    expect(series[0]?.key).toBe("2026-01-01");
+    expect(series[series.length - 1]?.key).toBe("2026-12-31");
+    const sep8 = series.find((p) => p.key === "2026-09-08");
+    expect(sep8?.total).toBe(780);
+    expect(series.find((p) => p.key === "2026-09-07")?.total).toBe(0);
+  });
+
+  it("includes Feb 29 in a leap year", () => {
+    const series = buildYearDailySalesSeries(
+      [
+        {
+          created_at: new Date(2024, 1, 29, 12, 0, 0).toISOString(),
+          line_total: 10,
+        },
+      ],
+      2024,
+    );
+    expect(series).toHaveLength(366);
+    expect(series.find((p) => p.key === "2024-02-29")?.total).toBe(10);
+  });
+});
+
+describe("buildYearWeeklySalesSeries", () => {
+  it("buckets by Monday–Sunday week and fills zeros for the year", () => {
+    const series = buildYearWeeklySalesSeries(
+      [
+        {
+          created_at: new Date(2026, 2, 11, 10, 0, 0).toISOString(),
+          line_total: 100,
+        },
+        {
+          created_at: new Date(2026, 2, 12, 8, 0, 0).toISOString(),
+          line_total: "38",
+        },
+        {
+          created_at: new Date(2025, 2, 11).toISOString(),
+          line_total: 999,
+        },
+      ],
+      2026,
+    );
+    expect(series).toHaveLength(53);
+    expect(series[0]?.key).toBe("2025-12-29");
+    expect(series[series.length - 1]?.key).toBe("2026-12-28");
+    const weekOfMar9 = series.find((p) => p.key === "2026-03-09");
+    expect(weekOfMar9?.total).toBe(138);
+    expect(series.find((p) => p.key === "2026-03-02")?.total).toBe(0);
+  });
+});
+
+describe("salesChartLabelIndexes", () => {
+  it("labels the first of each month on a daily year series", () => {
+    const series = buildYearDailySalesSeries([], 2026);
+    const indexes = salesChartLabelIndexes(series, "daily");
+    expect([...indexes].map((i) => series[i]?.key)).toEqual([
+      "2026-01-01",
+      "2026-02-01",
+      "2026-03-01",
+      "2026-04-01",
+      "2026-05-01",
+      "2026-06-01",
+      "2026-07-01",
+      "2026-08-01",
+      "2026-09-01",
+      "2026-10-01",
+      "2026-11-01",
+      "2026-12-01",
+    ]);
+  });
+
+  it("keeps the monthly chart's sparse month labels", () => {
+    const series = buildMonthlySalesSeries([], 2026);
+    expect([...salesChartLabelIndexes(series, "monthly")]).toEqual([
+      0, 2, 4, 5, 6, 7, 8, 11,
+    ]);
   });
 });
 

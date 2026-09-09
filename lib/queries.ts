@@ -1,6 +1,6 @@
 import {
   buildDailySalesSeries,
-  buildMonthlySalesSeries,
+  buildSalesChartSeries,
   effectiveLowStockThreshold,
   formatMoney,
   getCalendarWeekRange,
@@ -8,6 +8,7 @@ import {
   normalizeAlertSettings,
   type OwnerAlertSettings,
   rankBestSellers,
+  type SalesPeriod,
   sumLineTotals,
   toDateInputValue,
 } from "@/lib/inventory";
@@ -280,7 +281,10 @@ export async function getSalesLastDays(days = 7, today = new Date()) {
   };
 }
 
-export async function getMonthlySalesForYear(year: number) {
+export async function getSalesAnalyticsForYear(
+  year: number,
+  period: SalesPeriod,
+) {
   const supabase = await createClient();
   const start = new Date(year, 0, 1);
   const end = new Date(year, 11, 31, 23, 59, 59, 999);
@@ -293,12 +297,12 @@ export async function getMonthlySalesForYear(year: number) {
     .lte("created_at", end.toISOString())
     .order("created_at", { ascending: true });
 
-  if (error) throw new Error("Failed to load monthly sales");
+  if (error) throw new Error("Failed to load sales analytics");
   const rows = data ?? [];
-  const series = buildMonthlySalesSeries(rows, year);
   return {
     year,
-    series,
+    period,
+    series: buildSalesChartSeries(rows, year, period),
     total: sumLineTotals(rows),
     formatted: formatMoney(sumLineTotals(rows)),
   };
